@@ -1,0 +1,15 @@
+# every .txt
+
+*.txt
+
+# sensitive info
+
+data.env
+
+# records
+
+entries.csv
+
+# pkl files
+
+*.pkl
