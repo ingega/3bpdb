@@ -4,7 +4,7 @@
 
 # sensitive info
 
-data.env
+.env
 
 # records
 
@@ -13,3 +13,7 @@ entries.csv
 # pkl files
 
 *.pkl
+
+# system/venv
+
+__pycache__/*
