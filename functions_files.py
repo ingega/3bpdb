@@ -4,7 +4,7 @@ from csv import reader
 
 
 def escribirlog(mensaje):
-    miarch=open(path +"log.txt","a")
+    miarch=open(path / "log.txt","a")
     msj=mensaje + " " + time.asctime(time.gmtime()) + "\n"
     miarch.write(msj)
     miarch.close()

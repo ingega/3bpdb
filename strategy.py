@@ -1,16 +1,16 @@
-import time
-
 from functions_time import *
 import data
 from functions_strategy import miMail, BinanceAPIException
 from functions_files import escribirlog
 import requests
 from main import get_all_pairs_opor
-from decorator import print_func_text
+from decorators import print_func_text
 from tickers import Ticker
 from orders import Order
 
+
 path = data.path
+
 
 @print_func_text
 def inform(the_data, filename=None):  # to inform about the values in entries, and every 4hrs send a mail
@@ -37,6 +37,35 @@ def make_3bp_entries(entries):
         e = getEntry(tk, side)
         time.sleep(10)  # to make query
         the_order = checarOrden(tk, e['orderId'])
+        # is time to add the order into a db
+        from db import Record
+        record = Record()
+        # the very first thing, is get the operation_id
+        max_id = record.get_max_id()
+        if max_id.iloc[0]['max_id']:
+            operation_id = max_id.iloc[0]['max_id'] + 1
+        else:
+            operation_id = 1
+        # now we need the commission
+        commission = get_trade(tk, e['orderId'])['commission']
+        # build the record to be added
+        new_record = {
+            'strategy': [data.sistema],
+            'ticker': [tk],
+            'side': [side],
+            'quantity': the_order['cantidad'],
+            'price': [the_order['precio']],
+            'type': ['origin'],
+            'commission': [commission],
+            'fee': [0],  # is original order
+            'operation_id': [operation_id],
+            'binance_operation_id': [e['orderId']],
+            'epoch': [the_order['epoch']],
+            'pnl': [0]  # original order doesn't have pnl
+        }
+        # let's add the record
+        record.add_record(record=new_record)
+        # and then, save for local record
         params = {
             'priceIn': the_order['precio'],
             'priceOut': 0,
@@ -52,11 +81,32 @@ def make_3bp_entries(entries):
             'orderBUY': 0,
             'orderSELL': 0,
             'epochIn': 0,
+            'operation_id': operation_id,
         }
         order = Order(ticker=tk)
         order.add_order(params=params)
         # once seted the order and with entry done, let's protect it
         establecerOrdenes(0, tk)
+
+def get_trade(ticker, order_id):
+    from main import client
+    trades = None
+    for i in range(5):
+        trades = client.futures_account_trades(symbol=ticker, orderId=order_id)
+        if trades:
+            break
+        time.sleep(1)
+    if trades:
+        commission = float(trades[0]['commission'])
+        pnl = float(trades[0]['realizedPnl'])
+    else:
+        msg = f"the trade info can't get the  commission info"
+        escribirlog(msg)
+        miMail(msg)
+        commission = 0
+        pnl = 0
+    final = {'commission': commission, 'pnl': pnl}
+    return final
 
 def main():
     from functions_strategy import init, protect
@@ -66,12 +116,15 @@ def main():
             init()
             print("just in the principal loop")
             while True: # it's an error prevent
-                time.sleep(data.time)  # with this, we can get all the volatibility path, also prevent loops between out/in
-                every_time(hours=data.hours,mins=data.minutes,secs=data.seconds)
-                # the 16th hour don't be used, is timing filtering
-                hour=time.gmtime().tm_hour
+                # time.sleep(data.time)  # with this, we can get all
+                # the volatility path, also prevent loops between out/in
+                # every_time(hours=data.hours,mins=data.minutes,secs=data.seconds)
+                # just if we have forbidden hours
+                hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:
-                    msg=f"the {data.forbidden_hour}th hour is not allowed for strategy, the gmtime is {time.asctime(time.gmtime())} "
+                    msg = (f"the {data.forbidden_hour}"
+                         f"th hour is not allowed for strategy, "
+                         f"the gmtime is {time.asctime(time.gmtime())} ")
                     escribirlog(msg)
                     miMail(msg)
                 else:
@@ -79,11 +132,14 @@ def main():
                     g = get_all_pairs_opor()
                     df_in=g['df_in']
                     if len(df_in) > 0:
-                        msg = f"We have {len(df_in)} tickers that reach a 3b pattern, those are \n {df_in['ticker']}"
+                        msg = (f"We have {len(df_in)} "
+                               f"tickers that reach a 3b pattern, "
+                               f"those are \n {df_in['ticker']}")
                         escribirlog(msg)
                         miMail(msg)
                         make_3bp_entries(df_in)
-                        # protect works until there's no ticker in orders.pkl, so, when this happen, simply return to time func
+                        # protect works until there's no ticker in orders.pkl,
+                        # so, when this happens, simply return to time func
                         protect()
                     else:
                         if data.debug_mode:

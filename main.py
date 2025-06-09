@@ -1,15 +1,21 @@
 import pandas as pd
 import numpy as np
 from binance.client import Client
-
 import data
-#from binance.exceptions import BinanceAPIException
-import key # da api_key
 import requests, time
 import hashlib
 import hmac
+import os
+from dotenv import load_dotenv
 
-client = Client(key.api_key, key.api_secret)
+
+# let's load the env
+load_dotenv()
+api_key = os.getenv('API_KEY')
+api_secret = os.getenv('API_SECRET')
+
+client = Client(api_key, api_secret, requests_params={'timeout': 30})
+
 
 class DataHandler:
     def __init__(self, api_key, api_secret):
@@ -128,7 +134,7 @@ def pairs():
     return pairs
 
 def get_all_pairs_opor():
-    datahandler = DataHandler(key.api_key, key.api_secret)
+    datahandler = DataHandler(api_key, api_secret)
     p = pd.read_csv('ticks.csv', header=None)
     p = p.to_dict(orient='records')
 
@@ -141,8 +147,8 @@ def get_all_pairs_opor():
     df_in = pd.DataFrame(columns=cols)
 
     size = data.a_size
-    B_size = data.b_size
-    C_size = data.c_size
+    b_size = data.b_size
+    c_size = data.c_size
 
     individual_df = pd.DataFrame()  # empty dataframe
     for r in p:
@@ -159,20 +165,23 @@ def get_all_pairs_opor():
 
                 if (
                     s0 > size and
-                    s1 < s0 * B_size and
-                    s2 > s0 * C_size and
+                    s1 < s0 * b_size and
+                    s2 > s0 * c_size and
                     side1 != side0 and
                     side1 != side2
                 ):
                     # we need just the last record
                     individual_df = df.iloc[[-1]]
-                    df_in = pd.concat([df_in, individual_df], ignore_index=True)
+                    df_in = pd.concat([df_in, individual_df], ignore_index=True)
+
 
         except Exception as e:
-            print(f"[ERROR] Could not process {r[0]} at {time.asctime(time.gmtime())}: {e}")
+            print(f"[ERROR] Could not process {r[0]} at "
+                  f"{time.asctime(time.gmtime())}: {e}")
 
     # Save all data if in debug mode
-    file_name = f"{time.gmtime().tm_year}-{time.gmtime().tm_mon}-{time.gmtime().tm_mday}-{time.gmtime().tm_hour}.csv"
+    file_name = (f"{time.gmtime().tm_year}-{time.gmtime().tm_mon}-"
+                 f"{time.gmtime().tm_mday}-{time.gmtime().tm_hour}.csv")
     file_path = data.pathGan + file_name
 
     if data.debug_mode:
