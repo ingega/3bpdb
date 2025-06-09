@@ -17,3 +17,4 @@ entries.csv
 # system/venv
 
 __pycache__/*
+__pycache__
