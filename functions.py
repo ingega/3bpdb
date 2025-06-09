@@ -88,7 +88,7 @@ def ultimoPrecio(moneda):
 
 
 def obtenerSaldo():
-    dicto=leerDic(path+"ticker.txt")
+    dicto=leerDic(path / "ticker.txt")
     asset=dicto['quoteAsset']   #para que me de el saldo en el asset correcto
     n=0
     a=0

@@ -21,7 +21,7 @@ class Balance:
         aval_bal = str(aval_bal)
         u_file = open(self.pt,"w")
         u_file.write(aval_bal)
-        msg=f'the avalaible balance was set in {aval_bal}'
+        msg = f'the avalaible balance was set in {aval_bal}'
         escribirlog(msg)
 
     def set_balance(self):
