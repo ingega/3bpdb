@@ -264,7 +264,7 @@ def datosSalida(ticker,ganancia,resultado):
             real['commission'], real['funding'], real['operations'],
             saldo, new_local_balance, saldoCta
             )
-    agregardatoscsv(path+"entries.csv",salida)
+    agregardatoscsv(path / "entries.csv",salida)
     # informamos al usuario
     msj=(f"We realized da Exit function, the balance in file is "
          f"{saldo:.2f} and the local balance is "
