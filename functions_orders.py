@@ -455,10 +455,6 @@ def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
                  )
             escribirlog(msj)
         try:
-            msg = (f"order is ready for entry values ticker: {simbolo}, "
-                   f"side: {posicion}, qty: {cantidad}"
-                   )
-            escribirlog(msg)
             orden = cliente.futures_create_order(
             symbol=simbolo,
             side=posicion,
@@ -466,8 +462,6 @@ def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
             type=cliente.ORDER_TYPE_MARKET,
             quantity=cantidad
             )
-            msg = "order are ready seted"
-            escribirlog(msg)
             salida = orden['orderId']
             break
         except BinanceAPIException as error:
