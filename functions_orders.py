@@ -431,6 +431,8 @@ def mandarOrdenTP(simbolo,cantidad, posicion, precio):
         exit()
     return salida
 
+
+@print_func_text
 def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
     n = 0
     a = 0
@@ -453,6 +455,10 @@ def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
                  )
             escribirlog(msj)
         try:
+            msg = (f"order is ready for entry values ticker: {simbolo}, "
+                   f"side: {posicion}, qty: {cantidad}"
+                   )
+            escribirlog(msg)
             orden = cliente.futures_create_order(
             symbol=simbolo,
             side=posicion,
@@ -460,7 +466,9 @@ def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
             type=cliente.ORDER_TYPE_MARKET,
             quantity=cantidad
             )
-            salida=orden['orderId']
+            msg = "order are ready seted"
+            escribirlog(msg)
+            salida = orden['orderId']
             break
         except BinanceAPIException as error:
             n = n + 1
