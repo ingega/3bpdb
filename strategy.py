@@ -1,6 +1,8 @@
+import time
+
 from functions_time import *
 import data
-from functions_strategy import miMail, BinanceAPIException
+from functions import miMail, BinanceAPIException
 from functions_files import escribirlog
 import requests
 from main import get_all_pairs_opor
@@ -58,6 +60,7 @@ def make_3bp_entries(entries):
             'type': ['origin'],
             'commission': [commission],
             'fee': [0],  # is original order
+            'epoch_fee': [the_order['epoch']],
             'operation_id': [operation_id],
             'binance_operation_id': [e['orderId']],
             'epoch': [the_order['epoch']],
@@ -88,6 +91,7 @@ def make_3bp_entries(entries):
         # once seted the order and with entry done, let's protect it
         establecerOrdenes(0, tk)
 
+
 def get_trade(ticker, order_id):
     from main import client
     trades = None
@@ -108,6 +112,48 @@ def get_trade(ticker, order_id):
     final = {'commission': commission, 'pnl': pnl}
     return final
 
+
+def get_fee(ticker, operation_id):
+    """
+    This function query the last epoch and query with binance
+    :param ticker: necesary for client query
+    :param operation_id: necesary for db query
+    :return: dict with fee values
+    """
+    from main import client
+    # step 1: get the db data
+    from db import Record
+    record = Record()
+    data_record = record.read_record(operation_id=operation_id)
+    # data record is a df, so, the last record hace the epoch_fee
+    if data_record:
+        epoch_fee = data_record[-1]['epoch_fee']
+    else:  # this scenario must not exist
+        epoch_fee = int(time.time() * 1000)
+    # step 2: get binance data
+    # function must return last epoch fee
+    last_epoch = epoch_fee
+    fee = 0
+    epoch_fee = int(epoch_fee-1000)  # 1 sec less just in case
+    for i in range(5):  # 5 attempts with 1 sec pause
+        trades = client.futures_income_history(
+            startTime=epoch_fee, symbol=ticker
+        )
+        if trades:
+            # need accummulation
+            for trade in trades:
+                if trade['incomeType'] == 'FUNDING_FEE':
+                    fee += float(trade['income'])
+                    last_epoch = trade['time']
+            break
+        time.sleep(1)
+    final = {
+        'fee': fee,
+        'epoch_fee': last_epoch
+    }
+    return final
+
+
 def main():
     from functions_strategy import init, protect
     n = 0
@@ -118,7 +164,7 @@ def main():
             while True: # it's an error prevent
                 time.sleep(data.time)  # with this, we can get all
                 # the volatility path, also prevent loops between out/in
-                every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
+                #every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
                 # just if we have forbidden hours
                 hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:
@@ -129,6 +175,7 @@ def main():
                     miMail(msg)
                 else:
                     # Get the Bars opor
+                    print("let's find an opportunity", time.ctime())
                     g = get_all_pairs_opor()
                     df_in=g['df_in']
                     if len(df_in) > 0:
@@ -146,7 +193,7 @@ def main():
                             filename=g['path']
                         else:
                             filename=None
-                        inform(df_in,filename)
+                        #inform(df_in,filename)
         except BinanceAPIException as error:
             if error.code == -1021:  # timestamp, let's check booth
                 from functions import cliente
@@ -177,6 +224,7 @@ def main():
                 escribirlog(msg)
                 miMail(msg)
                 n = 0
+
 
 if __name__ == '__main__':
     main()

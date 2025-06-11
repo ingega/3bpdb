@@ -164,14 +164,14 @@ def getRealDeal(ticker):
     msg="dateIn, dateOut and simbol  are " + str(dateIn) + ", " + str(dateOut) + ", " + smb
     escribirlog(msg)
     try:
-        data = cliente.futures_income_history(startTime=dateIn, endTime=dateOut, symbol=smb)
+        query = cliente.futures_income_history(startTime=dateIn, endTime=dateOut, symbol=smb)
     except:
-        data=[]
-    if len(data)==0:
+        query=[]
+    if len(query)==0:
         msg="data has no records "
         escribirlog(msg)
         return False
-    df=pd.DataFrame(data)
+    df=pd.DataFrame(query)
     df['income']=df['income'].astype('float')
     profit=df['income'].sum()
     commission=df.loc[df['incomeType']=='COMMISSION']['income'].sum()

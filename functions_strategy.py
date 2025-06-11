@@ -5,7 +5,6 @@ from functions_orders import (checarOrden, cancelarOrden,
 from functions_orders import checarOrdenAdentro, cancelarOrdenes
 from functions_orders import mandarOrdenTP, mandarOrdenMercado, cerrarAMercado
 from functions import cliente, miMail, BinanceAPIException
-from data import barras, hours, minutes, seconds
 import time
 from functions import datosSalida
 from tickers import Ticker
@@ -260,7 +259,7 @@ def tie_exit(ticker):
     the_type = "indirect_sl" if (
             order_data[ticker]['adjust'] >= data.slmax) else "end"
     data_cierre = checarOrden(ticker, cierre['order_id'])
-    from strategy import get_trade
+    from strategy import get_trade, get_fee
     trade = get_trade(ticker,
                       order_data[ticker]['orderSL']
                       )
@@ -268,6 +267,8 @@ def tie_exit(ticker):
     pnl = trade['pnl']
     # and obviusly we need the operation_id
     operation_id = order_data[ticker]['operation_id']
+    # fee
+    fee = get_fee(ticker=ticker, operation_id=operation_id)
     new_record = {
         'strategy': [data.sistema],
         'ticker': [ticker],
@@ -276,7 +277,8 @@ def tie_exit(ticker):
         'price': [data_cierre['precio']],
         'type': [the_type],
         'commission': [commission],
-        'fee': [0],  # is original order
+        'fee': [fee['fee']],
+        'epoch_fee': [fee['epoch_fee']],
         'operation_id': [operation_id],
         # is sl update
         'binance_operation_id': [order_data[ticker]['orderSL']],
@@ -403,7 +405,7 @@ def protect():
                         accurate the outcomes
                         """
                         # after any move, let's send into db
-                        from strategy import get_trade
+                        from strategy import get_trade, get_fee
                         trade = get_trade(ticker,
                                            actual_orders[ticker]['orderSL']
                                           )
@@ -411,6 +413,8 @@ def protect():
                         pnl = trade['pnl']
                         # and obviusly we need the operation_id
                         operation_id = actual_orders[ticker]['operation_id']
+                        # fee
+                        fee = get_fee(ticker=ticker, operation_id=operation_id)
                         new_record = {
                             'strategy': [data.sistema],
                             'ticker': [ticker],
@@ -419,7 +423,8 @@ def protect():
                             'price': [sl_order['precio']],
                             'type': ['sl'],
                             'commission': [commission],
-                            'fee': [0],  # is original order
+                            'fee': [fee['fee']],
+                            'epoch_fee': [fee['epoch_fee']],
                             'operation_id': [operation_id],
                             # is sl update
                             'binance_operation_id': [actual_orders[ticker]['orderSL']],
@@ -491,7 +496,8 @@ def protect():
                         status_tp=tp_order['status']
                     if status_tp=='FILLED':  # winner winner chicken dinner
                         # add the record
-                        from strategy import get_trade
+                        from strategy import get_trade, get_fee
+                        # commission and pnl
                         trade = get_trade(ticker,
                                           actual_orders[ticker]['orderTP']
                                           )
@@ -499,6 +505,8 @@ def protect():
                         pnl = trade['pnl']
                         # and obviusly we need the operation_id
                         operation_id = actual_orders[ticker]['operation_id']
+                        # fee
+                        fee = get_fee(ticker=ticker, operation_id=operation_id)
                         # the type changes in tp
                         the_type = "indirect_tp" \
                             if actual_orders[ticker]['adjust'] \
@@ -511,7 +519,8 @@ def protect():
                             'price': [tp_order['precio']],
                             'type': [the_type],
                             'commission': [commission],
-                            'fee': [0],  # is original order
+                            'fee': [fee['fee']],
+                            'epoch_fee': [fee['epoch_fee']],
                             'operation_id': [operation_id],
                             # is sl update
                             'binance_operation_id': [actual_orders[ticker]['orderSL']],
@@ -539,7 +548,7 @@ def protect():
                     r=order.read_order()[ticker]
                     if r['epochIn']>0:
                         time_elapsed=time.time()-r['epochIn']
-                        if time_elapsed>(60 * barras):  # bars is in minutes
+                        if time_elapsed>(60 * data.barras):  # bars is in minutes
                             # inform, then make exit with getEntry,
                             # then call dataExit
                             msg=(f'the time elapsed for tie is '
@@ -562,14 +571,14 @@ def review():
     actual_hour = time.gmtime().tm_hour  # las horas
     actual_minutes = time.gmtime().tm_min  # los minutos
     actual_seconds = time.gmtime().tm_sec
-    actual_hour %= hours
-    actual_minutes %= minutes
+    actual_hour %= data.hours
+    actual_minutes %= data.minutes
     # we must notify to email
     # we need review of any ticker get the 3bp
     if (
-            actual_hour == hours - 1
-            and actual_minutes == minutes - 1
-            and actual_seconds > seconds
+            actual_hour == data.hours - 1
+            and actual_minutes == data.minutes - 1
+            and actual_seconds > data.seconds
     ):
         msg=f'is time to check for new oportunities, gmtime is {time.gmtime()}'
         escribirlog(msg)
