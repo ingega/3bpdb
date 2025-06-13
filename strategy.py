@@ -66,6 +66,8 @@ def make_3bp_entries(entries):
             'epoch': [the_order['epoch']],
             'pnl': [0]  # original order doesn't have pnl
         }
+        msg = f"the value of the new record is: {new_record}"
+        escribirlog(msg)
         # let's add the record
         record.add_record(record=new_record)
         # and then, save for local record
