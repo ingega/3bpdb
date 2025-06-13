@@ -29,7 +29,7 @@ class Record:
     def add_record(self, record: dict) -> None:
         """
         this function add a record into the postgres (aiven) db
-        :param record: a dictonary with the info to be added
+        :param record: a dictionary with the info to be added
         :return: None
         """
 
@@ -38,6 +38,8 @@ class Record:
 
         # create record
         df = pd.DataFrame(record)
+        msg = f"the new record, now is df, the value is {df}"
+        print(msg)
         # add record
         df.to_sql(table_name, self.engine, if_exists='append', index=False)
 
