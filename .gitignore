@@ -20,6 +20,7 @@ ticks.csv
 __pycache__/*
 __pycache__
 /__pycache__
+*.pyc
 
 # debug
 data.py
