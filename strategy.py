@@ -1,5 +1,3 @@
-import time
-
 from functions_time import *
 import data
 from functions import miMail, BinanceAPIException
@@ -10,7 +8,6 @@ from decorators import print_func_text
 from tickers import Ticker
 from orders import Order
 
-
 path = data.path
 
 
@@ -19,9 +16,10 @@ def inform(the_data, filename=None):  # to inform about the values in entries, a
     # inform
     msg = f"there's no entry yet, the values are {the_data}, gmtime is {time.gmtime()}"
     escribirlog(msg)
-    miMail(msg,filename)
+    miMail(msg, filename)
     pause = 60 - data.seconds
     time.sleep(pause + 1)  # avoid loop
+
 
 @print_func_text
 def make_3bp_entries(entries):
@@ -136,7 +134,7 @@ def get_fee(ticker, operation_id):
     # function must return last epoch fee
     last_epoch = epoch_fee
     fee = 0
-    epoch_fee = int(epoch_fee-1000)  # 1 sec less just in case
+    epoch_fee = int(epoch_fee - 1000)  # 1 sec less just in case
     for i in range(5):  # 5 attempts with 1 sec pause
         trades = client.futures_income_history(
             startTime=epoch_fee, symbol=ticker
@@ -163,23 +161,23 @@ def main():
         try:
             init()
             print("just in the main loop")
-            while True: # it's an error prevent
+            while True:  # it's an error prevent
                 time.sleep(data.time)  # with this, we can get all
                 # the volatility path, also prevent loops between out/in
-                #every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
+                # every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
                 # just if we have forbidden hours
                 hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:
                     msg = (f"the {data.forbidden_hour}"
-                         f"th hour is not allowed for strategy, "
-                         f"the gmtime is {time.asctime(time.gmtime())} ")
+                           f"th hour is not allowed for strategy, "
+                           f"the gmtime is {time.asctime(time.gmtime())} ")
                     escribirlog(msg)
                     miMail(msg)
                 else:
                     # Get the Bars opor
                     print("let's find an opportunity", time.ctime())
                     g = get_all_pairs_opor()
-                    df_in=g['df_in']
+                    df_in = g['df_in']
                     if len(df_in) > 0:
                         msg = (f"We have {len(df_in)} "
                                f"tickers that reach a 3b pattern, "
@@ -192,10 +190,10 @@ def main():
                         protect()
                     else:
                         if data.debug_mode:
-                            filename=g['path']
+                            filename = g['path']
                         else:
-                            filename=None
-                        #inform(df_in,filename)
+                            filename = None
+                        inform(df_in, filename)
         except BinanceAPIException as error:
             if error.code == -1021:  # timestamp, let's check booth
                 from functions import cliente
@@ -211,7 +209,7 @@ def main():
                 miMail(msj)
             n += 1
             # le damos 30 sgs
-            time.sleep(30+n)
+            time.sleep(30 + n)
         except requests.exceptions.ConnectionError as err:
             # Handle the "Connection aborted" error separately
             msg = f"Connection aborted error: {err}"
