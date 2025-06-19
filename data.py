@@ -26,7 +26,7 @@ bahias = 3  # este controla el ajuste del saldoO
 pausa = 10  # son los segundos que el sistema necesita para no empalmar las lecturas de simula.py
 barras = 5   # son los minutos que hacen que el sistema se vaya  a empate
 debug_mode = False
-# parameters necessaries for strategy
+# parameters necessary for strategy
 # gap=0.03
 # distance=0.015
 forbidden_hour = 25

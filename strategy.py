@@ -88,7 +88,7 @@ def make_3bp_entries(entries):
         }
         order = Order(ticker=tk)
         order.add_order(params=params)
-        # once seted the order and with entry done, let's protect it
+        # once set the order and with entry done, let's protect it
         establecerOrdenes(0, tk)
 
 
@@ -116,8 +116,8 @@ def get_trade(ticker, order_id):
 def get_fee(ticker, operation_id):
     """
     This function query the last epoch and query with binance
-    :param ticker: necesary for client query
-    :param operation_id: necesary for db query
+    :param ticker: necessary for client query
+    :param operation_id: necessary for db query
     :return: dict with fee values
     """
     from main import client
@@ -140,7 +140,7 @@ def get_fee(ticker, operation_id):
             startTime=epoch_fee, symbol=ticker
         )
         if trades:
-            # need accummulation
+            # need accumulation
             for trade in trades:
                 if trade['incomeType'] == 'FUNDING_FEE':
                     fee += float(trade['income'])
@@ -164,7 +164,7 @@ def main():
             while True:  # it's an error prevent
                 time.sleep(data.time)  # with this, we can get all
                 # the volatility path, also prevent loops between out/in
-                # every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
+                every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
                 # just if we have forbidden hours
                 hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:
