@@ -504,34 +504,35 @@ def checarOrdenAdentro(ticker):
     }
     return salida
 
+
 def cerrarAMercado(ticker):
     # we can take out the data from the actives orders
-    adentro=checarOrdenAdentro(ticker)
-    if adentro['cantidad']==0:
-        msj=f"there\'s no active order for {ticker} "
+    adentro = checarOrdenAdentro(ticker)
+    if adentro['cantidad'] == 0:
+        msj = f"there's no active order for {ticker} "
         escribirlog(msj)
         return
     # ahora la cerramos a mercado, tenemos posicion y cantidad
-    if adentro['posicion']=="BUY":
-        pos="SELL"
+    if adentro['posicion' ] == "BUY":
+        pos = "SELL"
     else:
-        pos="BUY"
-    orden=mandarOrdenMercado(adentro['ticker'],pos,adentro['cantidad'])
-    msj="se ha mandado cerrar a mercado en funcion."
+        pos = "BUY"
+    orden = mandarOrdenMercado(adentro['ticker'], pos, adentro['cantidad'])
+    msj = "se ha mandado cerrar a mercado en funcion."
     escribirlog(msj)
     # ahora saco la ganancia
-    datosOrden=checarOrden(adentro['ticker'], orden)
-    precioOut=datosOrden['precio']
+    datosOrden = checarOrden(adentro['ticker'], orden)
+    precioOut = datosOrden['precio']
     # el precioIn se tiene en adentro
-    precioIn=adentro['precioIn']
+    precioIn = adentro['precioIn']
     # adentro indica la posicion actual
-    if adentro['posicion']=="BUY":
-        ganancia=(precioOut-precioIn)/precioIn
+    if adentro['posicion'] == "BUY":
+        ganancia = (precioOut - precioIn) / precioIn
     else:
-        ganancia=(precioIn-precioOut)/precioIn
+        ganancia = (precioIn - precioOut) / precioIn
     ganancia -= 0.0008  # esto es por la ultima operacion
     # finalmente madamos la salida
-    salida={
+    salida = {
         'order_id': orden,
         'ganancia':ganancia,
         'orderId':orden,

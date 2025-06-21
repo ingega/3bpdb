@@ -250,22 +250,20 @@ def buscaManual(ticker):
 def tie_exit(ticker):
     cierre = cerrarAMercado(ticker)
     ganancia = cierre['ganancia']
-    msg=f'the partial profit for this operation in {ticker} is {ganancia}'
+    msg = f'the partial profit for this operation in {ticker} is {ganancia}'
     escribirlog(msg)
     # we must update the dateOut and priceOut
-    order=Order(ticker=ticker)
+    order = Order(ticker=ticker)
     # the operation must be added to the db, and adjust change the type
     order_data = order.read_order()
     the_type = "indirect_sl" if (
             order_data[ticker]['adjust'] >= data.slmax) else "end"
     data_cierre = checarOrden(ticker, cierre['order_id'])
     from strategy import get_trade, get_fee
-    trade = get_trade(ticker,
-                      order_data[ticker]['orderSL']
-                      )
+    trade = get_trade(ticker, cierre['order_id'])
     commission = trade['commission']
     pnl = trade['pnl']
-    # and obviusly we need the operation_id
+    # and obviously we need the operation_id
     operation_id = order_data[ticker]['operation_id']
     # fee
     fee = get_fee(ticker=ticker, operation_id=operation_id)
