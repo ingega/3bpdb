@@ -55,15 +55,16 @@ class Order:
             if params is not None:
                 o[self.ticker] = params
             else:
-                raise ValueError("entire is seted to True, so 'params' must be provided.")
+                raise ValueError("entire is set to True, so "
+                                 "'params' must be provided.")
         else:
             # Update only specified parameters
             if self.ticker not in o:
-                raise KeyError(f"Ticker '{self.ticker}' not found in orders.")
+                raise KeyError(f"ticker '{self.ticker}' not found in orders.")
 
             for name_of_parameter, value_of_parameter in parameters.items():
                 o[self.ticker][name_of_parameter] = value_of_parameter
-                msg=f'{name_of_parameter} has been stablished in {value_of_parameter}'
+                msg=f'{name_of_parameter} has been set in {value_of_parameter}'
                 escribirlog(msg)
         # save the file again
         with open(self.path,"wb") as file:

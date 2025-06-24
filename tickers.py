@@ -75,7 +75,7 @@ class Ticker:
 
     @print_func_text
     def reinit_ticker(self):
-        # if you're testing, this function is very usefull
+        # if you're testing, this function is very usefully
         t = {}
         with open(self.my_path, "wb") as file:
             pk.dump(t, file)

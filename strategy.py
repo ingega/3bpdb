@@ -89,7 +89,8 @@ def make_3bp_entries(entries):
         order = Order(ticker=tk)
         order.add_order(params=params)
         # once set the order and with entry done, let's protect it
-        establecerOrdenes(0, tk)
+        e = establecerOrdenes(0, tk)
+        print(f"value f e (set orders) {e}")
 
 
 def get_trade(ticker, order_id):
@@ -162,9 +163,9 @@ def main():
             init()
             print("just in the main loop")
             while True:  # it's an error prevent
-                time.sleep(data.time)  # with this, we can get all
+                #time.sleep(data.time)  # with this, we can get all
                 # the volatility path, also prevent loops between out/in
-                every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
+                #every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
                 # just if we have forbidden hours
                 hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:

@@ -1,5 +1,5 @@
 from data import *
-from functions_files import escribirlog,escribirerror, leerDic
+from functions_files import escribirlog, escribirerror, leerDic
 from functions import BinanceAPIException
 import time
 from decorators import print_func_text
@@ -7,19 +7,20 @@ from tickers import Ticker
 
 my_path = path
 
+
 class Balance:
-    def __init__(self,money):
+    def __init__(self, money):
         self.money = money
         self.pt = path / "avalaible_balance.txt"  # pt is for path
 
     def update_balance(self):
         # this function, substract balance from file
-        with open(self.pt,"rb") as file:
-            aval_bal=float(file.read())
+        with open(self.pt, "rb") as file:
+            aval_bal = float(file.read())
             file.close()
         aval_bal -= self.money
         aval_bal = str(aval_bal)
-        u_file = open(self.pt,"w")
+        u_file = open(self.pt, "w")
         u_file.write(aval_bal)
         msg = f'the avalaible balance was set in {aval_bal}'
         escribirlog(msg)
@@ -28,84 +29,85 @@ class Balance:
         # this function, set the balance in the file
         u_file = open(self.pt, "w")
         u_file.write(str(self.money))
-        msg=f'the avalaible balance was set in {self.money}'
+        msg = f'the avalaible balance was set in {self.money}'
         escribirlog(msg)
-
 
 
 def checarAbiertas(ticker):
     from functions import cliente
-    n=0
-    abi=0
+    n = 0
+    abi = 0
     while n < 5:
         try:
             ordenes = cliente.futures_get_open_orders(symbol=ticker)
-            abi=len(ordenes)
+            abi = len(ordenes)
             break
         except BinanceAPIException as error:
             n += 1
             a = n / 10
-            msj="Binance generó un error consistente en " + "\n" + error.message + "\n" + "error No. " + str(error.code)
+            msj = "Binance generó un error consistente en " + "\n" + error.message + "\n" + "error No. " + str(
+                error.code)
             escribirlog(msj)
             escribirerror(error.message, error.code)
             time.sleep(a)
     if n >= 5:
-        msj="no fue posible sacar los datos de ordenes abiertas"
+        msj = "no fue posible sacar los datos de ordenes abiertas"
         escribirlog(msj)
         return "null"
 
     return abi
 
-def checarOrden(simbolo,laorden):
+
+def checarOrden(simbolo, laorden):
     # ok sometimes if the order was just added  to the binance db
     # the system can't find it, so let's wait a pair of seconds
     # to execute search
     from functions import cliente
     time.sleep(2)
     n = 0
-    salida=[]
+    salida = []
     while n < 5:
         try:
-            orden = cliente.futures_get_order(symbol=simbolo,orderId=laorden)
+            orden = cliente.futures_get_order(symbol=simbolo, orderId=laorden)
             cantidad = orden['origQty']
-            cantidad=float(cantidad)
+            cantidad = float(cantidad)
             posicion = orden['side']
             precio = orden['avgPrice']
             precioA = orden['price']
             epoch = orden['time']
-            tiempo = int(epoch/1000)
+            tiempo = int(epoch / 1000)
             tiempo = time.asctime(time.gmtime(tiempo))
             fechaA = orden['updateTime']
-            fechaA = int(fechaA/1000)
+            fechaA = int(fechaA / 1000)
             fechaA = time.asctime(time.gmtime(fechaA))
             precio = float(precio)
             status = orden['status']
             parcial = float(orden['executedQty'])
             salida = {
-                'cantidad':cantidad,
-                'posicion':posicion,
-                'precio':precio,
-                'precioA':precioA,
+                'cantidad': cantidad,
+                'posicion': posicion,
+                'precio': precio,
+                'precioA': precioA,
                 'epoch': epoch,
-                'tiempo':tiempo,
-                'status':status,
-                'fechaA':fechaA,
-                'parcial':parcial,
+                'tiempo': tiempo,
+                'status': status,
+                'fechaA': fechaA,
+                'parcial': parcial,
             }
             break
         except BinanceAPIException as error:
             #OJO si el error es -2013, es decir no la encuentra, entonces la buscamos en buscarOrdenes
-            if error.code==-2013:
-                msj="el sistema de binance genero error 2013, no encuentra la orden " + str(laorden)
-                msj+=" se buscara de otra manera"
+            if error.code == -2013:
+                msj = "el sistema de binance genero error 2013, no encuentra la orden " + str(laorden)
+                msj += " se buscara de otra manera"
                 escribirlog(msj)
-                buscar=buscaOrdenes(simbolo,laorden)
+                buscar = buscaOrdenes(simbolo, laorden)
                 # para saber si encontró la orden, la imprimimos y le damos una pausa
-                msj="el resultado de buscar es "
-                msj+=str(buscar)
+                msj = "el resultado de buscar es "
+                msj += str(buscar)
                 escribirlog(msj)
-                if len(buscar)>0:
-                    if buscar['encontrado']==True:
+                if len(buscar) > 0:
+                    if buscar['encontrado'] == True:
                         salida = {
                             'cantidad': buscar['cantidad'],
                             'posicion': buscar['posicion'],
@@ -121,17 +123,21 @@ def checarOrden(simbolo,laorden):
             a = n / 10
             msj = simbolo + error.message + "intento " + str(n) + " idOrden " + str(laorden)
             escribirerror(msj, error.code)
-            print("Se ha generado un error al momento de sacar los datos de cantidad y side en checarOrden, el valor de orden es ", laorden,
-                  ", en este momento son las ", time.ctime(), " hora gm\n"
-                                                              " intento no. ", n)
+            print(
+                "Se ha generado un error al momento de sacar los datos de cantidad y side en checarOrden, el valor de orden es ",
+                laorden,
+                ", en este momento son las ", time.ctime(), " hora gm\n"
+                                                            " intento no. ", n)
             time.sleep(a)
         if n >= 5:
-            msj="no se logro con 5 intentos revisar la orden " + str(laorden) + " la salida que se mandara es " + str(salida)
+            msj = "no se logro con 5 intentos revisar la orden " + str(laorden) + " la salida que se mandara es " + str(
+                salida)
             escribirlog(msj)
-            salida=0
+            salida = 0
     return salida
 
-def buscaOrdenes(simbolo,idorden):
+
+def buscaOrdenes(simbolo, idorden):
     #debido a que el checarOrden no aparecen algunas (como no llenas PE) si se comete el error -2013, la buscamos aqui
     n = 0
     b = 0
@@ -139,28 +145,28 @@ def buscaOrdenes(simbolo,idorden):
     from functions import cliente
     while n < 5:
         try:
-            ordenes=cliente.futures_get_open_orders()
+            ordenes = cliente.futures_get_open_orders()
             for a in ordenes:
-                if a['symbol']==simbolo and a['orderId']==idorden:
-                    msj="se ha encontrado la orden en buscarOrdenes, su estatus es " + a['status']
+                if a['symbol'] == simbolo and a['orderId'] == idorden:
+                    msj = "se ha encontrado la orden en buscarOrdenes, su estatus es " + a['status']
                     escribirlog(msj)
                     cantidad = a['origQty']
                     cantidad = float(cantidad)
-                    parcial=a['executedQty']
-                    parcial=float(parcial)
+                    parcial = a['executedQty']
+                    parcial = float(parcial)
                     posicion = a['side']
                     precio = a['avgPrice']
-                    precioA=a['price']
+                    precioA = a['price']
                     tiempo = a['time']
                     tiempo = int(tiempo / 1000)
                     tiempo = time.asctime(time.gmtime(tiempo))
-                    fechaA=a['updateTime']
-                    fechaA=int(fechaA/1000)
-                    fechaA=time.asctime(time.gmtime(fechaA))
+                    fechaA = a['updateTime']
+                    fechaA = int(fechaA / 1000)
+                    fechaA = time.asctime(time.gmtime(fechaA))
                     precio = float(precio)
                     status = a['status']
                     salida = {
-                        'encontrado':True,
+                        'encontrado': True,
                         'cantidad': cantidad,
                         'posicion': posicion,
                         'precio': precio,
@@ -171,8 +177,8 @@ def buscaOrdenes(simbolo,idorden):
                         'parcial': parcial,
                     }
                     break
-            if salida== {}:  #no encontro la orden, ahora la buscamos en sistema de todas las órdenes
-                msj="no se encuentra la orden, nos vamos a sistema de todas las ordenes"
+            if salida == {}:  #no encontro la orden, ahora la buscamos en sistema de todas las órdenes
+                msj = "no se encuentra la orden, nos vamos a sistema de todas las ordenes"
                 escribirlog(msj)
                 ordenes = cliente.futures_get_all_orders()
                 for a in ordenes:
@@ -208,34 +214,35 @@ def buscaOrdenes(simbolo,idorden):
                         break
             break
         except BinanceAPIException as error:
-            msj="se cometio un error en el modulo buscarOrdenes "
+            msj = "se cometio un error en el modulo buscarOrdenes "
             escribirlog(msj)
             n = n + 1
             b = n / 10
             escribirerror(error.message, error.code)
             time.sleep(b)
     if n >= 5:
-        msj="despues de 5 intentos no se pudo obtener la info de buscarOrdenes "
+        msj = "despues de 5 intentos no se pudo obtener la info de buscarOrdenes "
         escribirlog(msj)
     return salida
+
 
 def cancelarOrden(idorden, ticker):
     #cuando uno trata de cancelar una órden que ya se llenó, el sistema genera el error -2011, en este caso
     #simplemente informamos que ya estaba cancelada
-    n=0
-    a=0
+    n = 0
+    a = 0
     moneda = ticker
-    salida=0
+    salida = 0
     from functions import cliente
     while n < 5:
         try:
             cliente.futures_cancel_order(symbol=moneda, orderId=idorden)
-            salida=1
+            salida = 1
             return salida
         except BinanceAPIException as error:
-            if error.code==-2011:
-                print("Binance rechazó la cancelación de la orden ",idorden, " revise manualmente")
-                salida=0
+            if error.code == -2011:
+                print("Binance rechazó la cancelación de la orden ", idorden, " revise manualmente")
+                salida = 0
                 break
             n = n + 1
             a = n / 10
@@ -250,6 +257,7 @@ def cancelarOrden(idorden, ticker):
         print("Se requiere el código de rescate")
         exit()
     return salida
+
 
 @print_func_text
 def obtenerCantidad(tk):  # ticker is a dictionary
@@ -276,7 +284,7 @@ def obtenerCantidad(tk):  # ticker is a dictionary
         # para ganar no hay
         msj = f"money we'll use is {In} "
         escribirlog(msj)
-        In = round(In,2)
+        In = round(In, 2)
     else:
         In = Entrada
     n = 0
@@ -285,7 +293,7 @@ def obtenerCantidad(tk):  # ticker is a dictionary
     #el dato lo tenemos en misdatos[entrada]
     if In < entrada:
         In = entrada
-        In += 0.05   # add five cents to get the next rounded qty in case of
+        In += 0.05  # add five cents to get the next rounded qty in case of
         msj = (f"actual entry is below of minimum requirement, "
                f"the entry was changed for {entrada} ")
         escribirlog(msj)
@@ -299,12 +307,12 @@ def obtenerCantidad(tk):  # ticker is a dictionary
             msj = f"the last price of ticker is {x} "
             escribirlog(msj)
             # ahora debemos verificar que la entrada si cumpla con el minimo
-            cantidad = (In*lvg) / x
+            cantidad = (In * lvg) / x
             # verificamos que si pasamos la cantidad minima pedida por binance
             if cantidad < cantidadMinima:
                 cantidad = cantidadMinima
-                msj=(f"the resulted money don't break the min "
-                     f"necesary, rather {cantidad} ")
+                msj = (f"the resulted money don't break the min "
+                       f"necesary, rather {cantidad} ")
                 escribirlog(msj)
             # mandamos la correcta precision para evitar errores
             cantidadO = cantidad  # ojo cantidad original
@@ -342,21 +350,22 @@ def obtenerCantidad(tk):  # ticker is a dictionary
     balance.update_balance()
     return cantidad
 
-def mandarOrdenStop(simbolo,posicion,cantidad,precio):
+
+def mandarOrdenStop(simbolo, posicion, cantidad, precio):
     #OJo en las ordenes stop, se debe triggear en el precio y establcer uno abajo/arriba
     misdatos = leerDic(path / "ticker.txt")
-    precision=misdatos['precision']
-    presicion=1/(10**precision)
-    if posicion=="BUY": # es un largo, se triggea en Sl, y la orden a poner en una posicion arriba
-        precioIn=precio+presicion
-    else: # Es un corto, se le pone uno abajo
-        precioIn=precio-presicion
-    precioIn=round(precioIn,precision)
+    precision = misdatos['precision']
+    presicion = 1 / (10 ** precision)
+    if posicion == "BUY":  # es un largo, se triggea en Sl, y la orden a poner en una posicion arriba
+        precioIn = precio + presicion
+    else:  # Es un corto, se le pone uno abajo
+        precioIn = precio - presicion
+    precioIn = round(precioIn, precision)
     print("los datos a mandar, en la orden son:\n"
           " simbolo :", simbolo, "side :", posicion, "price :", precio, "stopPrice :", precioIn)
     n = 0
     a = 0
-    salida=0
+    salida = 0
     from functions import cliente
     while n < 5:
         try:
@@ -368,12 +377,12 @@ def mandarOrdenStop(simbolo,posicion,cantidad,precio):
                 quantity=cantidad,
                 price=precioIn,
                 stopPrice=precio
-                )
+            )
             salida = ordenSL['orderId']
             break
         except BinanceAPIException as error:
-            if error.code==-2021: #OJO la orden se triggeo inmediatamente, mandamos de salida un -1
-                salida=-1
+            if error.code == -2021:  #OJO la orden se triggeo inmediatamente, mandamos de salida un -1
+                salida = -1
             n = n + 1
             a = n / 10
             print("Se cometió un error en el modulo madarOrdenStop")
@@ -381,13 +390,14 @@ def mandarOrdenStop(simbolo,posicion,cantidad,precio):
             time.sleep(a)
     if n >= 5:
         print("Se requiere el código de rescate")
-        if salida>-1: #me salgo
+        if salida > -1:  #me salgo
             exit()
     return salida
 
+
 def cancelarOrdenes(simbolo):
-    n=0
-    a=0
+    n = 0
+    a = 0
     from functions import cliente
     while n < 5:
         try:
@@ -403,10 +413,11 @@ def cancelarOrdenes(simbolo):
         print("Se requiere el código de rescate")
         exit()
 
-def mandarOrdenTP(simbolo,cantidad, posicion, precio):
-    n=0
-    a=0
-    salida=0
+
+def mandarOrdenTP(simbolo, cantidad, posicion, precio):
+    n = 0
+    a = 0
+    salida = 0
     from functions import cliente
     while n < 5:
         try:
@@ -433,34 +444,34 @@ def mandarOrdenTP(simbolo,cantidad, posicion, precio):
 
 
 @print_func_text
-def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
+def mandarOrdenMercado(simbolo, posicion, cantidad, checar=False):
     n = 0
-    a = 0
     from functions import cliente
     salida = 0
     # la nueva función es: si existe órden de ese ticker, no se ingresa
     adentro = checarOrdenAdentro(simbolo)
-    if adentro['cantidad'] > 0: # a caracas, tenemos posición adentro
-        msj = "en este momento hay una cantidad de " + str(adentro['cantidad'])
-        msj += " por tanto no se hace la entrada"
+    if adentro['cantidad'] > 0:  # a caracas, tenemos posición adentro
+        msj = (f"en este momento hay una cantidad de {adentro['cantidad']}"
+               f"por tanto no se hace la entrada"
+               )
         escribirlog(msj)
-        salida=-1
+        salida = -1
     while n < 5:
-        if salida==-1 and checar:
+        if salida == -1 and checar:
             break
         else:
-            msj = ("los valores de salida y checar son "
-                 + str(salida) + ","
-                 + str(checar) + " por tanto si entra"
-                 )
+            msj = (f"los valores de salida y checar son "
+                   f"{salida},"
+                   f"{checar} por tanto si entra"
+                   )
             escribirlog(msj)
         try:
             orden = cliente.futures_create_order(
-            symbol=simbolo,
-            side=posicion,
-            positionSide="BOTH",  # Esto es por que estamos en el one-way mode
-            type=cliente.ORDER_TYPE_MARKET,
-            quantity=cantidad
+                symbol=simbolo,
+                side=posicion,
+                positionSide="BOTH",  # Esto es por que estamos en el one-way mode
+                type=cliente.ORDER_TYPE_MARKET,
+                quantity=cantidad
             )
             salida = orden['orderId']
             break
@@ -475,32 +486,33 @@ def mandarOrdenMercado(simbolo,posicion,cantidad, checar=False):
         exit()
     return salida
 
+
 def checarOrdenAdentro(ticker):
     from functions import cliente
-    laOrden=cliente.futures_position_information(symbol=ticker)
+    laOrden = cliente.futures_position_information(symbol=ticker)
     cantidad = 0
     price_in = 0
     if len(laOrden) > 0:
-        laOrden=laOrden[0]
+        laOrden = laOrden[0]
         price_in = float(laOrden['entryPrice'])
         cantidad = float(laOrden['positionAmt'])
-    if cantidad!=0:
-        if cantidad<0:
-            posicion="SELL"
-            posicionCierre="BUY"
+    if cantidad != 0:
+        if cantidad < 0:
+            posicion = "SELL"
+            posicionCierre = "BUY"
         else:
             posicion = "BUY"
             posicionCierre = "SELL"
     else:
-        posicion="NULL"
-        posicionCierre="NULL"
+        posicion = "NULL"
+        posicionCierre = "NULL"
 
-    salida={
-        'ticker':ticker,
-        'cantidad':abs(cantidad),
-        'precioIn':price_in,
-        'posicion':posicion,
-        'posicionCierre':posicionCierre,
+    salida = {
+        'ticker': ticker,
+        'cantidad': abs(cantidad),
+        'precioIn': price_in,
+        'posicion': posicion,
+        'posicionCierre': posicionCierre,
     }
     return salida
 
@@ -513,7 +525,7 @@ def cerrarAMercado(ticker):
         escribirlog(msj)
         return
     # ahora la cerramos a mercado, tenemos posicion y cantidad
-    if adentro['posicion' ] == "BUY":
+    if adentro['posicion'] == "BUY":
         pos = "SELL"
     else:
         pos = "BUY"
@@ -534,27 +546,28 @@ def cerrarAMercado(ticker):
     # finalmente madamos la salida
     salida = {
         'order_id': orden,
-        'ganancia':ganancia,
-        'orderId':orden,
-        'priceOut':precioOut,
+        'ganancia': ganancia,
+        'orderId': orden,
+        'priceOut': precioOut,
     }
-    return  salida
+    return salida
 
-def mandarOrdenStopMarket(simbolo,posicion,cantidad,precio):
+
+def mandarOrdenStopMarket(simbolo, posicion, cantidad, precio):
     #OJo en las ordenes stop, se debe triggear en el precio y
     # establcer uno abajo/arriba
     tickers = Ticker(ticker=simbolo)
     ticker = tickers.read_ticker()
     precision = ticker[simbolo]['presicion']
     presicion = 1 / (10 ** precision)
-    if posicion == "BUY": # es un largo, se triggea en Sl, y la
+    if posicion == "BUY":  # es un largo, se triggea en Sl, y la
         # orden a poner en una posicion arriba
         precioIn = precio + presicion
     else:  # Es un corto, se le pone uno abajo
         precioIn = precio - presicion
     precioIn = round(precioIn, precision)
     print(f"los datos a mandar en la orden son: "
-          f" ticker : {simbolo}, side :" 
+          f" ticker : {simbolo}, side :"
           f"{posicion}, price : {precio}, stopPrice : {precioIn}")
     n = 0
     a = 0
@@ -563,19 +576,19 @@ def mandarOrdenStopMarket(simbolo,posicion,cantidad,precio):
     while n < 5:
         try:
             ordenSL = cliente.futures_create_order(
-                symbol = simbolo,
-                side = posicion,
-                positionSide = "BOTH",
-                type = "STOP_MARKET",
-                quantity = cantidad,
-                stopPrice = precio
-                )
+                symbol=simbolo,
+                side=posicion,
+                positionSide="BOTH",
+                type="STOP_MARKET",
+                quantity=cantidad,
+                stopPrice=precio
+            )
             salida = ordenSL['orderId']
             break
         except BinanceAPIException as error:
-            if error.code==-2021:
+            if error.code == -2021:
                 print("la orden se ejecutó inmediatamente, la salida será 0")
-                salida=0
+                salida = 0
                 break
             n = n + 1
             a = n / 10
@@ -586,3 +599,11 @@ def mandarOrdenStopMarket(simbolo,posicion,cantidad,precio):
         print("Se requiere el código de rescate")
         exit()
     return salida
+
+
+def main():
+    pass
+
+
+if __name__ == '__init__':
+    main()
