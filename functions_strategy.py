@@ -492,6 +492,7 @@ def protect():
                         )
                     else:
                         status_sl = sl_order['status']
+                    print(f"status of sl_order: {status_sl}")
                     if status_sl == 'FILLED':
                         """
                         well, in this case, 
@@ -593,6 +594,7 @@ def protect():
                         status_tp = order_not_found(ticker, actual_orders[ticker]['orderTP'])
                     else:
                         status_tp = tp_order['status']
+                    print(f"status of tp_order: {status_tp}")
                     if status_tp == 'FILLED':  # winner winner chicken dinner
                         # add the record
                         from strategy import get_trade, get_fee
@@ -645,6 +647,7 @@ def protect():
                         # so any action is necessary
                     # now wee need to review the time ellapsed for tie
                     r = order.read_order()[ticker]
+                    print(f"status of order: {r}")
                     if r['epochIn'] > 0:
                         time_elapsed = time.time() - r['epochIn']
                         if time_elapsed > (60 * data.barras):  # bars is in minutes

@@ -9,9 +9,9 @@ class Record:
         """
         we gonna create the engine object for init
         """
-        self.engine = self.create_engine()
+        self.engine = self.get_engine()
 
-    def create_engine(self):
+    def get_engine(self):
         load_dotenv()
         db_host = os.getenv('DB_HOST')
         db_port = os.getenv('DB_PORT')
@@ -85,7 +85,7 @@ class Record:
                 query = f"SELECT * FROM {table_name};"
                 df = pd.read_sql(query, connection)
             print(f"Data for db is ready")
-            return df.to_dict(orient='records')
+            return df
         except Exception as e:
             print(f"Error reading data: {e}")
             return None
