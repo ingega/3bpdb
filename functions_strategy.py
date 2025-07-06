@@ -602,12 +602,15 @@ def protect():
                         trade = get_trade(ticker,
                                           actual_orders[ticker]['orderTP']
                                           )
+                        print(f"value of trade: {trade}")
                         commission = trade['commission']
+                        print(f"value of commission: {commission}")
                         pnl = trade['pnl']
                         # and obviusly we need the operation_id
                         operation_id = actual_orders[ticker]['operation_id']
                         # fee
                         fee = get_fee(ticker=ticker, operation_id=operation_id)
+                        print(f"value of fee: {fee}")
                         # the type changes in tp
                         the_type = "indirect_tp" \
                             if actual_orders[ticker]['adjust'] \
@@ -628,6 +631,7 @@ def protect():
                             'epoch': [sl_order['epoch']],
                             'pnl': [pnl]
                         }
+                        print(f"value of new_record: {new_record}")
                         # let's added into a db
                         from db import Record
                         record = Record()
