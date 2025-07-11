@@ -114,6 +114,7 @@ def get_trade(ticker, order_id):
     return final
 
 
+@print_func_text
 def get_fee(ticker, operation_id):
     """
     This function query the last epoch and query with binance
@@ -126,6 +127,7 @@ def get_fee(ticker, operation_id):
     from db import Record
     record = Record()
     data_record = record.read_record(operation_id=operation_id)
+    print(f"value of data record: {data_record}")
     # data record is a df, so, the last record hace the epoch_fee
     if data_record:
         epoch_fee = data_record[-1]['epoch_fee']
@@ -165,7 +167,7 @@ def main():
             while True:  # it's an error prevent
                 time.sleep(data.time)  # with this, we can get all
                 # the volatility path, also prevent loops between out/in
-                every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
+                #every_time(hrs=data.hours,mins=data.minutes,secs=data.seconds)
                 # just if we have forbidden hours
                 hour = time.gmtime().tm_hour
                 if hour == data.forbidden_hour:

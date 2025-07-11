@@ -13,17 +13,20 @@ class Record:
 
     def get_engine(self):
         load_dotenv()
+        """
+        this section is for postgres
         db_host = os.getenv('DB_HOST')
         db_port = os.getenv('DB_PORT')
         db_name = os.getenv('DB_NAME')
         db_user = os.getenv('DB_USER')
         db_password = os.getenv('DB_PASSWORD')
         db_sslmode = os.getenv('DB_SSLMODE')
+        """
+        # this var is for sqlite
+        db_path = os.getenv('SQLITE_DB_PATH')
 
         # create the engine
-        engine = create_engine(
-            f"postgresql://{db_user}:{db_password}@"
-            f"{db_host}:{db_port}/{db_name}?sslmode={db_sslmode}")
+        engine = create_engine(f"sqlite:///{db_path}")
         return engine
 
     def add_record(self, record: dict) -> None:

@@ -230,6 +230,7 @@ def establecerOrdenes(orden, ticker):  # order = 0 is for initial bet
     return None
 
 
+@print_func_text
 def emergency_set(ticker):
     """
     This function is used when an order_sl can't be reached, so
@@ -244,8 +245,13 @@ def emergency_set(ticker):
     """
     # 1. cancel all open orders
     cancelarOrdenes(simbolo=ticker)
+    msg = f"the open orders are canceled"
+    escribirlog(msg)
     # 2. check the order inside
     inside = checarOrdenAdentro(ticker)
+    # the theory is 1 living order, none open
+    msg = f"the value of inside is {inside}"
+    escribirlog(msg)
     # i get ticker, cantidad, precioIn, posicion
     # posicionCierre
     # also need the precision of ticker
@@ -258,9 +264,16 @@ def emergency_set(ticker):
     else:
         qty = round(qty, params['qty_presicion'])
     # 3. flip it, with double qty
+    # let's review the data to be sended
+    msg = f"data to be send is {ticker}, {side}, {qty}"
+    escribirlog(msg)
     order = mandarOrdenMercado(simbolo=ticker, posicion=side,
                                cantidad=qty)
-    time.sleep(5)  # in order to be avalaible to read it
+    time.sleep(5)  # in order to be available to read it
+    # ok just for precaution, let's review again inside
+    inside = checarOrdenAdentro(ticker)
+    msg = f"after that markket order was sended, the values are {inside}"
+    escribirlog(msg)
     # 4. get the adjust value
     # the preview price is in orderSL, the new one in order
     the_order = Order(ticker=ticker).read_order()[ticker]
@@ -321,14 +334,16 @@ def emergency_set(ticker):
         return 1
     # finally set orders again
     # 100 value for avoid cancellation error
-    e = establecerOrdenes(100, ticker)
+    establecerOrdenes(100, ticker)
     # inform
     msg = (f"this message coming from emergency_set, manually check"
            f" if no error at all"
            )
     escribirlog(msg)
     miMail(msg)
-    return e
+    # this return avoid continue cycle in protect
+    return 1
+
 
 
 @print_func_text
@@ -608,6 +623,7 @@ def protect():
                         pnl = trade['pnl']
                         # and obviusly we need the operation_id
                         operation_id = actual_orders[ticker]['operation_id']
+                        print(f"operation id: {operation_id}")
                         # fee
                         fee = get_fee(ticker=ticker, operation_id=operation_id)
                         print(f"value of fee: {fee}")
