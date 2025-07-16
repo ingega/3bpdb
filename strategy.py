@@ -7,6 +7,7 @@ from main import get_all_pairs_opor
 from decorators import print_func_text
 from tickers import Ticker
 from orders import Order
+import pandas as pd
 
 path = data.path
 
@@ -102,8 +103,12 @@ def get_trade(ticker, order_id):
             break
         time.sleep(1)
     if trades:
-        commission = float(trades[0]['commission'])
-        pnl = float(trades[0]['realizedPnl'])
+        # the operation can get so many trades, so, is necesary summarize
+        df = pd.DataFrame(trades)
+        df['commission'] = df['commission'].astype('float')
+        df['realizedPnl'] = df['realizedPnl'].astype('float')
+        commission = df['commission'].sum()
+        pnl = df['realizedPnl'].sum()
     else:
         msg = f"the trade info can't get the  commission info"
         escribirlog(msg)
