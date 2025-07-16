@@ -25,6 +25,8 @@ __pycache__
 /__pycache__
 *.pyc
 .new
+.idea
+.venv
 
 # debug
 data.py
